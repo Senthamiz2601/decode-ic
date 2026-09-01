@@ -1,0 +1,129 @@
+Decode.IC — Phase 3 Changelog
+==============================
+(Real-data wiring for Dependencies, Risk Center, Technical Debt,
+Code Health, Reports — mock data removed for these pages only)
+
+1. PHASE 3 COMPLETED FEATURES
+------------------------------
+- Dependencies page now shows real detected dependencies from the
+  analyzed repository's manifest files (package.json, requirements.txt,
+  etc.), not the mock react/next/prisma list.
+- Risk Center now shows real risks derived from the analyzer's
+  deterministic findings (hardcoded secrets, eval usage, deep nesting,
+  large files, TODO/FIXME, large API surface, etc.), not the mock
+  auth-service/billing-service risks.
+- Technical Debt now shows real findings grouped by category, plus
+  the analyzer's actual technicalDebtPercent, not the mock issue list.
+- Code Health now displays the real healthScore, linesOfCode, and
+  languages from the repository's stored analysis (reuses the existing
+  GET /api/repositories/:id endpoint — no new endpoint needed).
+- Reports now assembles report summaries live from the current
+  repository.analysis object (health, architecture, risk, technical
+  debt, dependencies) instead of a mock report list. No fake report
+  history is presented — reports reflect only the current analysis,
+  since no report persistence exists in this project.
+- Settings required no changes: its repository-related fields were
+  already static UI, not bound to mock data.
+
+2. FILES ADDED
+---------------
+- server/services/derivedData.service.js
+    Pure transforms of repository.analysis into the view shapes the
+    Dependencies/Risk Center/Technical Debt/Reports pages expect.
+    No new analysis logic; every field traces back to a value the
+    analyzer already computed. Missing data is reported as
+    unavailable/omitted, never invented.
+- src/services/dependencyService.ts
+- src/services/riskService.ts
+- src/services/technicalDebtService.ts
+
+3. FILES MODIFIED
+-------------------
+- server/controllers/repository.controller.js
+    Added getRepositoryDependencies, getRepositoryRisks,
+    getRepositoryTechnicalDebt, getRepositoryReports, and a shared
+    loadRepositoryOr404() guard (same 404/400 behavior as the existing
+    getRepositoryArchitecture).
+- server/routes/repository.routes.js
+    Registered the 4 new GET routes.
+- src/services/reportService.ts
+    Rewritten to call GET /repositories/:id/reports instead of
+    returning mock report data. generateReport() intentionally left
+    unimplemented (no report-generation/export pipeline exists).
+- src/pages/DependencyExplorer.tsx
+- src/pages/RiskCenter.tsx
+- src/pages/TechnicalDebt.tsx
+- src/pages/CodeHealth.tsx
+- src/pages/Reports.tsx
+    Wired to real services with loading / error / empty states via
+    the existing shared LoadingState / ErrorState components.
+- src/types/index.ts
+    Added DependencyManifestEntry, DependencyManifest, and
+    TechnicalDebtFinding — shapes that mirror what the new endpoints
+    actually return, kept separate from the older mock-shaped
+    interfaces (Risk, TechnicalDebtIssue, etc. are unchanged and still
+    used only by remaining mock pages).
+- tsconfig.json
+    One-line fix: added "ignoreDeprecations": "6.0" to silence a
+    pre-existing TypeScript 6.0 deprecation error on "baseUrl" that
+    was blocking `tsc -b`. No behavioral change.
+- src/services/technicalDebtService.ts
+    Bug fix: TechnicalDebtFinding was imported from '@/types' for
+    internal use but never re-exported, which broke
+    TechnicalDebt.tsx's `import type { TechnicalDebtFinding } from
+    '@/services/technicalDebtService'`. Added `export type {
+    TechnicalDebtFinding }`.
+
+4. NEW API ENDPOINTS
+-----------------------
+GET /api/repositories/:id/dependencies
+GET /api/repositories/:id/risks
+GET /api/repositories/:id/technical-debt
+GET /api/repositories/:id/reports
+
+All four:
+- validate the repository id (400 if invalid)
+- 404 if the repository doesn't exist
+- 404 with a clear message if the repository hasn't been analyzed yet
+- read only from the existing repository.analysis object
+- never call GitHub or touch MongoDB directly
+
+Existing endpoint reused (no new endpoint needed):
+GET /api/repositories/:id  — now also the real data source for Code Health
+
+5. REMAINING MOCK-DATA PAGES (out of scope for Phase 3, untouched)
+----------------------------------------------------------------------
+- src/pages/Dashboard.tsx           (mockData: codeHealth, repositories, risks)
+- src/pages/Repositories.tsx        (mockData: repositories)
+- src/pages/CodeExplorer.tsx        (mockData: fileTree, codeSnippet) — Phase 4
+- src/pages/AIAssistant.tsx         (mockData: aiMessages, questions) — Phase 5
+- src/services/aiService.ts         (mockData: aiMessages) — Phase 5
+- src/components/CommandPalette.tsx (mockData: repositories)
+- src/components/NotificationsPanel.tsx (mockData: notifications)
+
+6. KNOWN LIMITATIONS
+------------------------
+- Repository + analysis state is stored in memory only
+  (server/services/repository.service.js), not MongoDB. A server
+  restart clears all connected repositories and their analysis
+  results. MongoDB is currently only used for authentication
+  (server/models/User.js). This predates Phase 3 and was not
+  introduced or fixed by it.
+- Reports have no history/persistence — the Reports page always
+  reflects the *current* analysis, not past analyses over time.
+- Technical Debt has no fixed category taxonomy (complexity/
+  duplication/coupling/etc.) — categories come directly from
+  whatever the analyzer's rule findings report, which may not match
+  the old mock UI's categories 1:1.
+- Code Explorer, AI Assistant, Impact Analysis, Change Simulation,
+  and Refactoring are still fully mocked — planned for Phase 4/5.
+  Code Explorer in particular needs a backend gap filled first: the
+  analyzer currently only produces aggregate counts, not a persisted
+  per-file path/language/LOC list.
+- node_modules is NOT included in this zip (both root and server/) —
+  run `npm install` in both folders before running. The node_modules
+  originally bundled in the uploaded project contained platform-
+  specific native binaries (Rollup) that do not run cross-platform;
+  a fresh install avoids this entirely.
+- dist/ (a stale Vite build output folder) and tsconfig.tsbuildinfo
+  (a build cache file) are excluded as build artifacts, not source.
