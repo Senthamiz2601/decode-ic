@@ -21,7 +21,6 @@ export interface AuthUser {
 
 export interface LanguageBreakdown {
   language: string;
-  linesOfCode: number;
   percent: number;
 }
 

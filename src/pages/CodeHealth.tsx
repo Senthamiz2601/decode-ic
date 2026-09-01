@@ -706,7 +706,7 @@ export default function CodeHealth() {
                     <div className="flex items-center gap-2 shrink-0">
 
                       <span className="text-[10px] text-muted font-mono">
-                        {language.linesOfCode.toLocaleString()} LOC
+                        {language.percent}%
                       </span>
 
                       <span className="text-xs font-mono text-heading font-medium w-10 text-right">
