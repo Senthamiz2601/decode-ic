@@ -1,7 +1,5 @@
 import type { AIMessage } from '@/types';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { API_BASE_URL } from './api';
 
 interface AskCodebaseResponse {
   ok: boolean;
@@ -70,7 +68,7 @@ export async function getSuggestedQuestions(
   if (!response.ok || !data.ok) {
     throw new Error(
       data.message ||
-      'Failed to generate repository questions',
+        'Failed to generate repository questions',
     );
   }
 

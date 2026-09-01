@@ -1,8 +1,5 @@
 import type { Repository } from '@/types';
-
-const API_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
+import { API_BASE_URL } from './api';
 
 // ─────────────────────────────────────────────
 // GitHub: Get repositories for an owner
@@ -11,7 +8,7 @@ const API_URL =
 
 export async function getGitHubRepositories(owner: string) {
   const response = await fetch(
-    `${API_URL}/api/github/repositories/${encodeURIComponent(owner)}`
+    `${API_BASE_URL}/api/github/repositories/${encodeURIComponent(owner)}`
   );
 
   if (!response.ok) {
@@ -20,7 +17,6 @@ export async function getGitHubRepositories(owner: string) {
 
   return response.json();
 }
-
 
 // ─────────────────────────────────────────────
 // GitHub: Connect to a specific repository
@@ -32,7 +28,7 @@ export async function connectRepository(
   repo: string
 ) {
   const response = await fetch(
-    `${API_URL}/api/repositories/connect`,
+    `${API_BASE_URL}/api/repositories/connect`,
     {
       method: 'POST',
       headers: {
@@ -52,7 +48,6 @@ export async function connectRepository(
   return response.json();
 }
 
-
 // ─────────────────────────────────────────────
 // Repository: List connected repositories
 // GET /api/repositories
@@ -63,7 +58,7 @@ export async function listRepositories(): Promise<{
   repositories: Repository[];
 }> {
   const response = await fetch(
-    `${API_URL}/api/repositories`
+    `${API_BASE_URL}/api/repositories`
   );
 
   if (!response.ok) {
@@ -73,8 +68,6 @@ export async function listRepositories(): Promise<{
   return response.json();
 }
 
-
-
 // ─────────────────────────────────────────────
 // Repository: Get single connected repository
 // GET /api/repositories/:id
@@ -82,7 +75,7 @@ export async function listRepositories(): Promise<{
 
 export async function getRepository(id: string) {
   const response = await fetch(
-    `${API_URL}/api/repositories/${encodeURIComponent(id)}`
+    `${API_BASE_URL}/api/repositories/${encodeURIComponent(id)}`
   );
 
   if (!response.ok) {
@@ -103,7 +96,7 @@ export async function analyzeRepository(
   excludedFolders: string
 ) {
   const response = await fetch(
-    `${API_URL}/api/repositories/${encodeURIComponent(
+    `${API_BASE_URL}/api/repositories/${encodeURIComponent(
       id
     )}/analyze`,
     {
@@ -139,7 +132,7 @@ export async function reanalyzeRepository(
   id: string
 ): Promise<{ ok: true }> {
   const response = await fetch(
-    `${API_URL}/api/repositories/${encodeURIComponent(
+    `${API_BASE_URL}/api/repositories/${encodeURIComponent(
       id
     )}/re-analyze`,
     {
@@ -154,9 +147,8 @@ export async function reanalyzeRepository(
   return response.json();
 }
 
-
 // ─────────────────────────────────────────────
-// Repository: File tree (real GitHub files for the analyzed branch)
+// Repository: File tree
 // GET /api/repositories/:id/files
 // ─────────────────────────────────────────────
 
@@ -167,7 +159,7 @@ export async function getRepositoryFileTree(id: string): Promise<{
   truncated: boolean;
 }> {
   const response = await fetch(
-    `${API_URL}/api/repositories/${encodeURIComponent(id)}/files`
+    `${API_BASE_URL}/api/repositories/${encodeURIComponent(id)}/files`
   );
 
   const result = await response.json();
@@ -197,7 +189,7 @@ export async function getRepositoryFileContent(
   size: number;
 }> {
   const response = await fetch(
-    `${API_URL}/api/repositories/${encodeURIComponent(id)}/files/content?path=${encodeURIComponent(path)}`
+    `${API_BASE_URL}/api/repositories/${encodeURIComponent(id)}/files/content?path=${encodeURIComponent(path)}`
   );
 
   const result = await response.json();
@@ -218,7 +210,7 @@ export async function removeRepository(
   id: string
 ): Promise<{ ok: true }> {
   const response = await fetch(
-    `${API_URL}/api/repositories/${encodeURIComponent(id)}`,
+    `${API_BASE_URL}/api/repositories/${encodeURIComponent(id)}`,
     {
       method: 'DELETE',
     }
